@@ -192,9 +192,11 @@ body { font-family: 'Noto Sans TC', sans-serif; font-size: 15px; line-height: 1.
 /* BP grid — left/right hand */
 .bp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 4px; }
 @media(max-width:520px) { .bp-grid { grid-template-columns: 1fr; } }
-.bp-hand { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 12px 14px; }
+.bp-hand { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; }
 .bp-hand-label { font-size: 13px; font-weight: 500; color: var(--gray-600); margin-bottom: 10px; letter-spacing: 0.01em; }
 .bp-hand-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bp-hand-fields.three { grid-template-columns: 1fr 1fr 1fr; }
+@media(max-width:480px) { .bp-hand-fields.three { grid-template-columns: 1fr 1fr; } }
 </style>
 </head>
 <body>
@@ -295,43 +297,24 @@ body { font-family: 'Noto Sans TC', sans-serif; font-size: 15px; line-height: 1.
       <div class="field"><label>身高 (cm)</label><input id="r_height" type="number" placeholder="170"></div>
       <div class="field"><label>體重 (kg)</label><input id="r_weight" type="number" step="0.1" placeholder="65"></div>
       <div class="field"><label>體脂率 (%)</label><input id="r_fat" type="number" step="0.1" placeholder="20"></div>
+      <div class="field"><label>腰圍 (cm)</label><input id="r_waist" type="number" step="0.1" placeholder="80"></div>
     </div>
-    <div class="section-label">心血管 — 血壓</div>
-    <div class="bp-grid">
-      <div class="bp-hand">
-        <div class="bp-hand-label">🫱 右手</div>
-        <div class="bp-hand-fields">
-          <div class="field">
-            <label>收縮壓 (mmHg)</label>
-            <input id="r_sbp_r" type="number" placeholder="120" min="60" max="250">
-          </div>
-          <div class="field">
-            <label>舒張壓 (mmHg)</label>
-            <input id="r_dbp_r" type="number" placeholder="80" min="40" max="150">
-          </div>
-        </div>
-      </div>
-      <div class="bp-hand">
-        <div class="bp-hand-label">🫲 左手</div>
-        <div class="bp-hand-fields">
-          <div class="field">
-            <label>收縮壓 (mmHg)</label>
-            <input id="r_sbp_l" type="number" placeholder="120" min="60" max="250">
-          </div>
-          <div class="field">
-            <label>舒張壓 (mmHg)</label>
-            <input id="r_dbp_l" type="number" placeholder="80" min="40" max="150">
-          </div>
-        </div>
+    <div class="section-label">心血管 — 血壓 &amp; 心律</div>
+    <div class="bp-hand">
+      <div class="bp-hand-label">🫱 右手</div>
+      <div class="bp-hand-fields three">
+        <div class="field"><label>收縮壓 (mmHg)</label><input id="r_sbp_r" type="number" placeholder="120" min="60" max="250"></div>
+        <div class="field"><label>舒張壓 (mmHg)</label><input id="r_dbp_r" type="number" placeholder="80" min="40" max="150"></div>
+        <div class="field"><label>心律 (bpm)</label><input id="r_hr_r" type="number" placeholder="72" min="30" max="220"></div>
       </div>
     </div>
-    <div class="section-label">心血管 — 心律</div>
-    <div class="form-grid">
-      <div class="field">
-        <label>心律 (bpm)</label>
-        <input id="r_hr" type="number" placeholder="72" min="30" max="220">
+    <div class="bp-hand">
+      <div class="bp-hand-label">🫲 左手</div>
+      <div class="bp-hand-fields three">
+        <div class="field"><label>收縮壓 (mmHg)</label><input id="r_sbp_l" type="number" placeholder="120" min="60" max="250"></div>
+        <div class="field"><label>舒張壓 (mmHg)</label><input id="r_dbp_l" type="number" placeholder="80" min="40" max="150"></div>
+        <div class="field"><label>心律 (bpm)</label><input id="r_hr_l" type="number" placeholder="72" min="30" max="220"></div>
       </div>
-      <div></div>
     </div>
     <div class="section-label">就醫與用藥</div>
     <div class="form-grid">
@@ -546,20 +529,23 @@ function getMemberRecords(id) { return db.records.filter(r=>r.memberId===id).sor
 function calcBMI(h, w) { if(!h||!w) return null; return +(w/((h/100)**2)).toFixed(1); }
 function bmiStatus(b) { if(!b)return{l:'—',c:''}; if(b<18.5)return{l:'體重不足',c:'warn'}; if(b<24)return{l:'正常',c:'good'}; if(b<27)return{l:'過重',c:'warn'}; return{l:'肥胖',c:'bad'}; }
 function bpStatus(s,d) { if(!s||!d)return{l:'—',c:''}; if(s>=140||d>=90)return{l:'高血壓',c:'bad'}; if(s>=130||d>=80)return{l:'偏高',c:'warn'}; if(s<90||d<60)return{l:'偏低',c:'warn'}; return{l:'正常',c:'good'}; }
-function hrStatus(h) { if(!h)return{l:'—',c:''}; if(h<60)return{l:'偏低',c:'warn'}; if(h>100)return{l:'偏高',c:'warn'}; return{l:'正常',c:'good'}; }
+function hrStatus(h) { if(!h)return{l:'—',c:''}; if(h<60)return{l:'偏低',c:'warn'}; if(h>100)return{l:'偏快',c:'warn'}; return{l:'正常',c:'good'}; }
 function fatStatus(f,g) { if(!f)return{l:'—',c:''}; const lo=g==='女'?20:10,hi=g==='女'?30:20; if(f<lo)return{l:'偏低',c:'warn'}; if(f>hi)return{l:'偏高',c:'warn'}; return{l:'正常',c:'good'}; }
+// 腰圍標準：男>90cm、女>80cm 為腹部肥胖
+function waistStatus(w, gender) { if(!w)return{l:'—',c:''}; const thr=gender==='女'?80:90; if(w>thr)return{l:'腹部肥胖',c:'bad'}; if(w>thr-5)return{l:'接近警戒',c:'warn'}; return{l:'正常',c:'good'}; }
 // 脈壓差 = 收縮壓 - 舒張壓，正常 30-50 mmHg
 function ppStatus(s,d) { if(!s||!d)return{v:null,l:'—',c:''}; const pp=s-d; if(pp<30)return{v:pp,l:'偏窄',c:'warn'}; if(pp>60)return{v:pp,l:'偏寬',c:'bad'}; return{v:pp,l:'正常',c:'good'}; }
 // 兩手收縮壓差：正常 < 10 mmHg，10-20 觀察，>20 異常
 function armDiffStatus(sr,sl) { if(!sr||!sl)return{v:null,l:'—',c:''}; const d=Math.abs(sr-sl); if(d<=10)return{v:d,l:'正常 (≤10)',c:'good'}; if(d<=20)return{v:d,l:'需觀察 (11–20)',c:'warn'}; return{v:d,l:'異常 (>20)',c:'bad'}; }
-// 取兩手平均值做主要顯示（有其中一手即顯示）
+// 兩手心律差：正常 < 5 bpm
+function hrDiffStatus(hr_r,hr_l) { if(!hr_r||!hr_l)return{v:null,l:'—',c:''}; const d=Math.abs(hr_r-hr_l); if(d<=5)return{v:d,l:'正常 (≤5)',c:'good'}; if(d<=10)return{v:d,l:'需觀察 (6–10)',c:'warn'}; return{v:d,l:'差異偏大 (>10)',c:'bad'}; }
+// 取兩手平均值（向下相容舊資料）
 function getBP(r) {
-  const hasr = r.sbp_r&&r.dbp_r, hasl = r.sbp_l&&r.dbp_l;
-  // 向下相容舊資料 (sbp/dbp)
-  if (!hasr&&!hasl) return {sbp:r.sbp||null,dbp:r.dbp||null};
-  if (hasr&&hasl) return {sbp:Math.round((r.sbp_r+r.sbp_l)/2), dbp:Math.round((r.dbp_r+r.dbp_l)/2)};
-  if (hasr) return {sbp:r.sbp_r,dbp:r.dbp_r};
-  return {sbp:r.sbp_l,dbp:r.dbp_l};
+  const hasr=r.sbp_r&&r.dbp_r, hasl=r.sbp_l&&r.dbp_l;
+  if(!hasr&&!hasl) return {sbp:r.sbp||null,dbp:r.dbp||null,hr:r.hr||null};
+  if(hasr&&hasl) return {sbp:Math.round((r.sbp_r+r.sbp_l)/2),dbp:Math.round((r.dbp_r+r.dbp_l)/2),hr:r.hr_r&&r.hr_l?Math.round((r.hr_r+r.hr_l)/2):(r.hr_r||r.hr_l||null)};
+  if(hasr) return {sbp:r.sbp_r,dbp:r.dbp_r,hr:r.hr_r||null};
+  return {sbp:r.sbp_l,dbp:r.dbp_l,hr:r.hr_l||null};
 }
 
 // ─── Render ───────────────────────────────────────────────
@@ -604,11 +590,15 @@ function renderOverview() {
   const r = recs[0];
   const color = getMemberColor(member.id);
   const bmi = r ? calcBMI(r.height,r.weight) : null;
-  const bp = r ? getBP(r) : {sbp:null,dbp:null};
-  const bmiS=bmiStatus(bmi), bpS=bpStatus(bp.sbp,bp.dbp), hrS=r?hrStatus(r.hr):{l:'—',c:''}, fatS=r?fatStatus(r.fat,member.gender):{l:'—',c:''};
-  const ppR = r ? ppStatus(r.sbp_r,r.dbp_r) : {v:null,l:'—',c:''};
-  const ppL = r ? ppStatus(r.sbp_l,r.dbp_l) : {v:null,l:'—',c:''};
-  const armD = r ? armDiffStatus(r.sbp_r,r.sbp_l) : {v:null,l:'—',c:''};
+  const bp = r ? getBP(r) : {sbp:null,dbp:null,hr:null};
+  const bmiS=bmiStatus(bmi);
+  const fatS=r?fatStatus(r.fat,member.gender):{l:'—',c:''};
+  const waistS=r?waistStatus(r.waist,member.gender):{l:'—',c:''};
+  const ppR=r?ppStatus(r.sbp_r,r.dbp_r):{v:null,l:'—',c:''};
+  const ppL=r?ppStatus(r.sbp_l,r.dbp_l):{v:null,l:'—',c:''};
+  const armD=r?armDiffStatus(r.sbp_r,r.sbp_l):{v:null,l:'—',c:''};
+  const hrDiff=r?hrDiffStatus(r.hr_r,r.hr_l):{v:null,l:'—',c:''};
+  const hrR=r?(r.hr_r||null):null, hrL=r?(r.hr_l||null):null;
   el.innerHTML = `
     <div class="card" style="margin-bottom:1rem">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:${r?'1rem':'0'}">
@@ -622,34 +612,35 @@ function renderOverview() {
       <div style="font-size:12px;color:var(--gray-400);margin-bottom:8px">最新紀錄・${r.date}</div>
       <div class="analysis-grid">
         <div class="stat-card"><div class="stat-label">BMI</div><div class="stat-value">${bmi??'—'}</div><div style="margin-top:4px"><span class="metric-pill ${bmiS.c}">${bmiS.l}</span></div></div>
-        <div class="stat-card"><div class="stat-label">心律</div><div class="stat-value">${r.hr??'—'}<span class="stat-unit">bpm</span></div><div style="margin-top:4px"><span class="metric-pill ${hrS.c}">${hrS.l}</span></div></div>
         <div class="stat-card"><div class="stat-label">體脂率</div><div class="stat-value">${r.fat??'—'}<span class="stat-unit">%</span></div><div style="margin-top:4px"><span class="metric-pill ${fatS.c}">${fatS.l}</span></div></div>
+        <div class="stat-card"><div class="stat-label">腰圍</div><div class="stat-value">${r.waist??'—'}<span class="stat-unit">cm</span></div><div style="margin-top:4px"><span class="metric-pill ${waistS.c}">${waistS.l}</span></div></div>
         <div class="stat-card"><div class="stat-label">體重</div><div class="stat-value">${r.weight??'—'}<span class="stat-unit">kg</span></div></div>
         <div class="stat-card"><div class="stat-label">睡眠</div><div class="stat-value">${r.sleep??'—'}<span class="stat-unit">hr</span></div></div>
         <div class="stat-card"><div class="stat-label">飲水</div><div class="stat-value">${r.water??'—'}<span class="stat-unit">ml</span></div></div>
       </div>
       ${(r.sbp_r&&r.dbp_r)||(r.sbp_l&&r.dbp_l)||(r.sbp&&r.dbp)?`
       <div style="background:var(--gray-50);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px">
-        <div style="font-size:12px;font-weight:500;color:var(--gray-500);margin-bottom:10px">血壓詳情</div>
+        <div style="font-size:12px;font-weight:500;color:var(--gray-500);margin-bottom:10px">心血管詳情</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
           ${r.sbp_r&&r.dbp_r?`<div style="background:white;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:8px 10px">
             <div style="font-size:11px;color:var(--gray-400);margin-bottom:3px">🫱 右手</div>
             <div style="font-size:16px;font-weight:500">${r.sbp_r}/${r.dbp_r} <span style="font-size:11px;color:var(--gray-400)">mmHg</span></div>
+            ${r.hr_r?`<div style="font-size:13px;color:var(--gray-600);margin:2px 0">心律 ${r.hr_r} <span style="font-size:11px">bpm</span> <span class="metric-pill ${hrStatus(r.hr_r).c}" style="font-size:11px">${hrStatus(r.hr_r).l}</span></div>`:''}
             <span class="metric-pill ${bpStatus(r.sbp_r,r.dbp_r).c}" style="font-size:11px">${bpStatus(r.sbp_r,r.dbp_r).l}</span>
             <span class="metric-pill ${ppR.c}" style="font-size:11px">脈壓差 ${ppR.v??'—'}</span>
           </div>`:'<div></div>'}
           ${r.sbp_l&&r.dbp_l?`<div style="background:white;border:1px solid var(--gray-200);border-radius:var(--radius-sm);padding:8px 10px">
             <div style="font-size:11px;color:var(--gray-400);margin-bottom:3px">🫲 左手</div>
             <div style="font-size:16px;font-weight:500">${r.sbp_l}/${r.dbp_l} <span style="font-size:11px;color:var(--gray-400)">mmHg</span></div>
+            ${r.hr_l?`<div style="font-size:13px;color:var(--gray-600);margin:2px 0">心律 ${r.hr_l} <span style="font-size:11px">bpm</span> <span class="metric-pill ${hrStatus(r.hr_l).c}" style="font-size:11px">${hrStatus(r.hr_l).l}</span></div>`:''}
             <span class="metric-pill ${bpStatus(r.sbp_l,r.dbp_l).c}" style="font-size:11px">${bpStatus(r.sbp_l,r.dbp_l).l}</span>
             <span class="metric-pill ${ppL.c}" style="font-size:11px">脈壓差 ${ppL.v??'—'}</span>
           </div>`:'<div></div>'}
         </div>
-        ${r.sbp_r&&r.sbp_l?`<div style="font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="color:var(--gray-500)">兩手收縮壓差：</span>
-          <span style="font-weight:500">${armD.v} mmHg</span>
-          <span class="metric-pill ${armD.c}">${armD.l}</span>
-        </div>`:''}
+        <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:13px">
+          ${armD.v!==null?`<span style="color:var(--gray-500)">兩手血壓差：</span><span style="font-weight:500">${armD.v} mmHg</span><span class="metric-pill ${armD.c}">${armD.l}</span>`:''}
+          ${hrDiff.v!==null?`<span style="color:var(--gray-500);margin-left:8px">兩手心律差：</span><span style="font-weight:500">${hrDiff.v} bpm</span><span class="metric-pill ${hrDiff.c}">${hrDiff.l}</span>`:''}
+        </div>
       </div>`:''}
       ${r.meds?`<div style="background:var(--warning-light);border:1px solid var(--warning-border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--warning);margin-top:8px">💊 用藥：${r.meds}</div>`:''}
       ${r.symptoms?`<div style="background:var(--danger-light);border:1px solid var(--danger-border);border-radius:6px;padding:8px 12px;font-size:13px;color:var(--danger);margin-top:8px">⚠️ 症狀：${r.symptoms}</div>`:''}
@@ -669,6 +660,7 @@ function renderRecords() {
     const bp=getBP(r);
     const ppR=ppStatus(r.sbp_r,r.dbp_r), ppL=ppStatus(r.sbp_l,r.dbp_l);
     const armD=armDiffStatus(r.sbp_r,r.sbp_l);
+    const hrD=hrDiffStatus(r.hr_r,r.hr_l);
     return `<div class="record-card">
       <div class="record-header">
         <span style="font-size:14px;font-weight:500">${r.date}</span>
@@ -679,13 +671,16 @@ function renderRecords() {
         ${r.weight?`<span class="metric-pill">體重 ${r.weight}kg</span>`:''}
         ${bmi?`<span class="metric-pill ${bmiStatus(bmi).c}">BMI ${bmi}</span>`:''}
         ${r.fat?`<span class="metric-pill">體脂 ${r.fat}%</span>`:''}
+        ${r.waist?`<span class="metric-pill ${waistStatus(r.waist, db.members.find(m=>m.id===r.memberId)?.gender||'男').c}">腰圍 ${r.waist}cm</span>`:''}
         ${r.sbp_r&&r.dbp_r?`<span class="metric-pill ${bpStatus(r.sbp_r,r.dbp_r).c}">右手 ${r.sbp_r}/${r.dbp_r}</span>`:''}
+        ${r.hr_r?`<span class="metric-pill ${hrStatus(r.hr_r).c}">右心律 ${r.hr_r}</span>`:''}
         ${r.sbp_l&&r.dbp_l?`<span class="metric-pill ${bpStatus(r.sbp_l,r.dbp_l).c}">左手 ${r.sbp_l}/${r.dbp_l}</span>`:''}
+        ${r.hr_l?`<span class="metric-pill ${hrStatus(r.hr_l).c}">左心律 ${r.hr_l}</span>`:''}
         ${!r.sbp_r&&!r.sbp_l&&r.sbp&&r.dbp?`<span class="metric-pill ${bpStatus(r.sbp,r.dbp).c}">血壓 ${r.sbp}/${r.dbp}</span>`:''}
+        ${armD.v!==null?`<span class="metric-pill ${armD.c}">血壓差 ${armD.v}</span>`:''}
+        ${hrD.v!==null?`<span class="metric-pill ${hrD.c}">心律差 ${hrD.v}</span>`:''}
         ${ppR.v?`<span class="metric-pill ${ppR.c}">右脈壓差 ${ppR.v}</span>`:''}
         ${ppL.v?`<span class="metric-pill ${ppL.c}">左脈壓差 ${ppL.v}</span>`:''}
-        ${armD.v!==null?`<span class="metric-pill ${armD.c}">兩手差 ${armD.v}</span>`:''}
-        ${r.hr?`<span class="metric-pill ${hrStatus(r.hr).c}">心律 ${r.hr}bpm</span>`:''}
         ${r.sleep?`<span class="metric-pill">睡眠 ${r.sleep}hr</span>`:''}
         ${r.water?`<span class="metric-pill">飲水 ${r.water}ml</span>`:''}
       </div>
@@ -712,15 +707,28 @@ function renderAnalysis() {
   const hasBPData = recs.some(r=>r.sbp_r||r.sbp_l||r.sbp);
   const hasArmData = recs.some(r=>r.sbp_r&&r.sbp_l);
   const hasPPData  = recs.some(r=>(r.sbp_r&&r.dbp_r)||(r.sbp_l&&r.dbp_l)||(r.sbp&&r.dbp));
+  const hasHRData  = recs.some(r=>r.hr_r||r.hr_l||r.hr);
+  const hasHRDiff  = recs.some(r=>r.hr_r&&r.hr_l);
+  const hasWaist   = recs.some(r=>r.waist);
 
   el.innerHTML = `
     <div class="card">
       <div class="chart-label">體重趨勢 (kg)</div>
       <div class="chart-wrapper"><canvas id="cw"></canvas></div>
 
+      ${hasWaist?`
+      <div class="chart-label">腰圍趨勢 (cm)</div>
+      <div class="chart-wrapper" style="height:180px"><canvas id="cwaist"></canvas></div>
+      `:''}
+
       ${hasBPData?`
-      <div class="chart-label">血壓趨勢 — 右手 / 左手 收縮壓 (mmHg)</div>
+      <div class="chart-label">血壓趨勢 — 右手（紅）/ 左手（藍）收縮壓實線・舒張壓虛線</div>
       <div class="chart-wrapper"><canvas id="cbp"></canvas></div>
+      `:''}
+
+      ${hasHRData?`
+      <div class="chart-label">心律趨勢 — 右手（紅）/ 左手（藍）(bpm)</div>
+      <div class="chart-wrapper" style="height:180px"><canvas id="chr"></canvas></div>
       `:''}
 
       ${hasPPData?`
@@ -730,7 +738,12 @@ function renderAnalysis() {
 
       ${hasArmData?`
       <div class="chart-label">兩手收縮壓差趨勢 (正常 ≤10 mmHg，>20 需就醫)</div>
-      <div class="chart-wrapper" style="height:180px"><canvas id="carm"></canvas></div>
+      <div class="chart-wrapper" style="height:160px"><canvas id="carm"></canvas></div>
+      `:''}
+
+      ${hasHRDiff?`
+      <div class="chart-label">兩手心律差趨勢 (正常 ≤5 bpm)</div>
+      <div class="chart-wrapper" style="height:160px"><canvas id="chrdiff"></canvas></div>
       `:''}
 
       <div class="chart-label">BMI 趨勢</div>
@@ -746,54 +759,75 @@ function renderAnalysis() {
     const wData = recs.map(r=>r.weight||null);
     if (wData.some(v=>v)) charts['w'] = new Chart(document.getElementById('cw'),{type:'line',data:{labels,datasets:[{data:wData,borderColor:color,backgroundColor:color+'22',fill:true,tension:0.3,pointRadius:4}]},options:baseOpt});
 
-    // BP L/R systolic
+    // Waist
+    if (hasWaist) {
+      const waistData = recs.map(r=>r.waist||null);
+      const member2 = db.members.find(m=>m.id===currentMemberId);
+      const thr = member2?.gender==='女'?80:90;
+      charts['waist'] = new Chart(document.getElementById('cwaist'),{type:'line',data:{labels,datasets:[{data:waistData,borderColor:'#7c3aed',backgroundColor:'#7c3aed22',fill:true,tension:0.3,pointRadius:4}]},options:{...baseOpt,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`腰圍：${ctx.parsed.y} cm`}}},
+        scales:{y:{suggestedMin:Math.min(...waistData.filter(v=>v))-10,grid:{color:gridColor},ticks:{callback:v=>v+' cm'}},x:{grid:{color:gridColor}}}
+      }});
+    }
+
+    // BP L/R systolic + diastolic
     if (hasBPData) {
-      const sbpR = recs.map(r=>r.sbp_r||null);
-      const sbpL = recs.map(r=>r.sbp_l||null);
-      const sbpOld = recs.map(r=>(!r.sbp_r&&!r.sbp_l&&r.sbp)?r.sbp:null);
-      const dbpR = recs.map(r=>r.dbp_r||null);
-      const dbpL = recs.map(r=>r.dbp_l||null);
-      const datasets = [];
-      if (sbpR.some(v=>v)) datasets.push({label:'右手收縮壓',data:sbpR,borderColor:'#dc2626',borderDash:[],fill:false,tension:0.3,pointRadius:4});
-      if (dbpR.some(v=>v)) datasets.push({label:'右手舒張壓',data:dbpR,borderColor:'#dc262688',borderDash:[4,3],fill:false,tension:0.3,pointRadius:3,borderWidth:1.5});
-      if (sbpL.some(v=>v)) datasets.push({label:'左手收縮壓',data:sbpL,borderColor:'#2563eb',borderDash:[],fill:false,tension:0.3,pointRadius:4});
-      if (dbpL.some(v=>v)) datasets.push({label:'左手舒張壓',data:dbpL,borderColor:'#2563eb88',borderDash:[4,3],fill:false,tension:0.3,pointRadius:3,borderWidth:1.5});
-      if (sbpOld.some(v=>v)) datasets.push({label:'收縮壓',data:sbpOld,borderColor:'#6b7280',fill:false,tension:0.3,pointRadius:4});
-      if (datasets.length) charts['bp'] = new Chart(document.getElementById('cbp'),{type:'line',data:{labels,datasets},options:legendOpt});
+      const sbpR=recs.map(r=>r.sbp_r||null), dbpR=recs.map(r=>r.dbp_r||null);
+      const sbpL=recs.map(r=>r.sbp_l||null), dbpL=recs.map(r=>r.dbp_l||null);
+      const sbpOld=recs.map(r=>(!r.sbp_r&&!r.sbp_l&&r.sbp)?r.sbp:null);
+      const datasets=[];
+      if(sbpR.some(v=>v)) datasets.push({label:'右手收縮壓',data:sbpR,borderColor:'#dc2626',fill:false,tension:0.3,pointRadius:4});
+      if(dbpR.some(v=>v)) datasets.push({label:'右手舒張壓',data:dbpR,borderColor:'#dc262688',borderDash:[4,3],fill:false,tension:0.3,pointRadius:3,borderWidth:1.5});
+      if(sbpL.some(v=>v)) datasets.push({label:'左手收縮壓',data:sbpL,borderColor:'#2563eb',fill:false,tension:0.3,pointRadius:4});
+      if(dbpL.some(v=>v)) datasets.push({label:'左手舒張壓',data:dbpL,borderColor:'#2563eb88',borderDash:[4,3],fill:false,tension:0.3,pointRadius:3,borderWidth:1.5});
+      if(sbpOld.some(v=>v)) datasets.push({label:'收縮壓',data:sbpOld,borderColor:'#6b7280',fill:false,tension:0.3,pointRadius:4});
+      if(datasets.length) charts['bp']=new Chart(document.getElementById('cbp'),{type:'line',data:{labels,datasets},options:legendOpt});
     }
 
-    // Pulse pressure (脈壓差)
+    // HR L/R
+    if (hasHRData) {
+      const hrR=recs.map(r=>r.hr_r||null), hrL=recs.map(r=>r.hr_l||null);
+      const hrOld=recs.map(r=>(!r.hr_r&&!r.hr_l&&r.hr)?r.hr:null);
+      const hrDs=[];
+      if(hrR.some(v=>v)) hrDs.push({label:'右手心律',data:hrR,borderColor:'#dc2626',fill:false,tension:0.3,pointRadius:4});
+      if(hrL.some(v=>v)) hrDs.push({label:'左手心律',data:hrL,borderColor:'#2563eb',fill:false,tension:0.3,pointRadius:4});
+      if(hrOld.some(v=>v)) hrDs.push({label:'心律',data:hrOld,borderColor:'#6b7280',fill:false,tension:0.3,pointRadius:4});
+      if(hrDs.length) charts['hr']=new Chart(document.getElementById('chr'),{type:'line',data:{labels,datasets:hrDs},options:{...legendOpt,scales:{y:{suggestedMin:50,suggestedMax:110,grid:{color:gridColor}},x:{grid:{color:gridColor}}}}});
+    }
+
+    // Pulse pressure 脈壓差
     if (hasPPData) {
-      const ppR = recs.map(r=>r.sbp_r&&r.dbp_r?r.sbp_r-r.dbp_r:(r.sbp&&r.dbp?r.sbp-r.dbp:null));
-      const ppL = recs.map(r=>r.sbp_l&&r.dbp_l?r.sbp_l-r.dbp_l:null);
-      const ppDs = [];
-      if (ppR.some(v=>v)) ppDs.push({label:'右手脈壓差',data:ppR,borderColor:'#dc2626',fill:false,tension:0.3,pointRadius:4});
-      if (ppL.some(v=>v)) ppDs.push({label:'左手脈壓差',data:ppL,borderColor:'#2563eb',fill:false,tension:0.3,pointRadius:4});
-      const ppOpt = { ...legendOpt, scales:{ y:{min:0,max:80,grid:{color:gridColor},
-        ticks:{callback:v=>v+' mmHg'},
-        }, x:{grid:{color:gridColor}} },
-        plugins:{ ...legendOpt.plugins,
-          annotation:{annotations:{
-            safe:{type:'box',yMin:30,yMax:50,backgroundColor:'rgba(22,163,74,0.06)',borderWidth:0,label:{display:true,content:'正常範圍 30–50',font:{size:11},color:'#16a34a',position:{x:'start',y:'start'}}}
-          }}
-        }
-      };
-      if (ppDs.length) charts['pp'] = new Chart(document.getElementById('cpp'),{type:'line',data:{labels,datasets:ppDs},options:ppOpt});
+      const ppR=recs.map(r=>r.sbp_r&&r.dbp_r?r.sbp_r-r.dbp_r:(r.sbp&&r.dbp?r.sbp-r.dbp:null));
+      const ppL=recs.map(r=>r.sbp_l&&r.dbp_l?r.sbp_l-r.dbp_l:null);
+      const ppDs=[];
+      if(ppR.some(v=>v)) ppDs.push({label:'右手脈壓差',data:ppR,borderColor:'#dc2626',fill:false,tension:0.3,pointRadius:4});
+      if(ppL.some(v=>v)) ppDs.push({label:'左手脈壓差',data:ppL,borderColor:'#2563eb',fill:false,tension:0.3,pointRadius:4});
+      if(ppDs.length) charts['pp']=new Chart(document.getElementById('cpp'),{type:'line',data:{labels,datasets:ppDs},options:{...legendOpt,scales:{y:{min:0,max:80,grid:{color:gridColor}},x:{grid:{color:gridColor}}}}});
     }
 
-    // Arm difference
+    // Arm BP difference
     if (hasArmData) {
-      const armDiff = recs.map(r=>r.sbp_r&&r.sbp_l?Math.abs(r.sbp_r-r.sbp_l):null);
-      const bgColors = armDiff.map(v=>!v?'#ccc':v<=10?'#16a34a88':v<=20?'#d9770688':'#dc262688');
-      charts['arm'] = new Chart(document.getElementById('carm'),{type:'bar',data:{labels,datasets:[{label:'兩手收縮壓差',data:armDiff,backgroundColor:bgColors}]},options:{...baseOpt,
-        scales:{y:{min:0,suggestedMax:30,grid:{color:gridColor},ticks:{callback:v=>v+' mmHg'}},x:{grid:{color:gridColor}}},
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`兩手差：${ctx.parsed.y} mmHg`}}}
+      const armDiff=recs.map(r=>r.sbp_r&&r.sbp_l?Math.abs(r.sbp_r-r.sbp_l):null);
+      const bgColors=armDiff.map(v=>!v?'#ccc':v<=10?'#16a34a88':v<=20?'#d9770688':'#dc262688');
+      charts['arm']=new Chart(document.getElementById('carm'),{type:'bar',data:{labels,datasets:[{data:armDiff,backgroundColor:bgColors}]},options:{...baseOpt,
+        scales:{y:{min:0,suggestedMax:25,grid:{color:gridColor},ticks:{callback:v=>v+' mmHg'}},x:{grid:{color:gridColor}}},
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`兩手血壓差：${ctx.parsed.y} mmHg`}}}
+      }});
+    }
+
+    // HR difference between hands
+    if (hasHRDiff) {
+      const hrDiff=recs.map(r=>r.hr_r&&r.hr_l?Math.abs(r.hr_r-r.hr_l):null);
+      const hrDiffColors=hrDiff.map(v=>!v?'#ccc':v<=5?'#16a34a88':v<=10?'#d9770688':'#dc262688');
+      charts['hrdiff']=new Chart(document.getElementById('chrdiff'),{type:'bar',data:{labels,datasets:[{data:hrDiff,backgroundColor:hrDiffColors}]},options:{...baseOpt,
+        scales:{y:{min:0,suggestedMax:15,grid:{color:gridColor},ticks:{callback:v=>v+' bpm'}},x:{grid:{color:gridColor}}},
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`兩手心律差：${ctx.parsed.y} bpm`}}}
       }});
     }
 
     // BMI
     const bmiData=recs.map(r=>calcBMI(r.height,r.weight));
-    if (bmiData.some(v=>v)) charts['bmi'] = new Chart(document.getElementById('cbmi'),{type:'bar',data:{labels,datasets:[{data:bmiData,backgroundColor:bmiData.map(b=>!b?'#ccc':b<18.5?'#2563eb88':b<24?'#16a34a88':b<27?'#d9770688':'#dc262688')}]},options:{...baseOpt,scales:{y:{min:14,grid:{color:gridColor}},x:{grid:{color:gridColor}}}}});
+    if(bmiData.some(v=>v)) charts['bmi']=new Chart(document.getElementById('cbmi'),{type:'bar',data:{labels,datasets:[{data:bmiData,backgroundColor:bmiData.map(b=>!b?'#ccc':b<18.5?'#2563eb88':b<24?'#16a34a88':b<27?'#d9770688':'#dc262688')}]},options:{...baseOpt,scales:{y:{min:14,grid:{color:gridColor}},x:{grid:{color:gridColor}}}}});
   }, 100);
 }
 
@@ -809,6 +843,8 @@ function renderAdvice() {
   const ppR = ppStatus(r.sbp_r,r.dbp_r);
   const ppL = ppStatus(r.sbp_l,r.dbp_l);
   const armD = armDiffStatus(r.sbp_r,r.sbp_l);
+  const hrD  = hrDiffStatus(r.hr_r, r.hr_l);
+  const waistS = waistStatus(r.waist, member.gender);
   const advices = [], warnings = [];
 
   // 血壓警示（以較高的手為準）
@@ -817,18 +853,33 @@ function renderAdvice() {
   if (checkSBP>=140||checkDBP>=90) warnings.push('血壓偏高（最高量測值 '+checkSBP+'/'+checkDBP+' mmHg），建議盡快就醫評估，減少鹽分攝取、避免情緒激動。');
   else if (checkSBP>=130||checkDBP>=80) warnings.push('血壓略高（'+checkSBP+'/'+checkDBP+' mmHg），建議注意飲食清淡、規律運動，持續追蹤。');
 
-  // 兩手差警示
-  if (armD.v!==null&&armD.v>20) warnings.push('兩手收縮壓差達 '+armD.v+' mmHg（正常應 ≤10）。差距過大可能與動脈狹窄或主動脈問題有關，建議就醫進一步檢查。');
-  else if (armD.v!==null&&armD.v>10) warnings.push('兩手收縮壓差 '+armD.v+' mmHg，略超正常值（≤10），建議持續觀察，若持續偏高請就醫。');
+  // 兩手血壓差警示
+  if (armD.v!==null&&armD.v>20) warnings.push('兩手收縮壓差達 '+armD.v+' mmHg（正常應 ≤10），差距過大可能與動脈狹窄或主動脈問題有關，建議就醫進一步檢查。');
+  else if (armD.v!==null&&armD.v>10) warnings.push('兩手收縮壓差 '+armD.v+' mmHg 略超正常（≤10），建議持續觀察，若持續偏高請就醫。');
+
+  // 心律警示
+  const checkHR = Math.max(r.hr_r||0, r.hr_l||0, r.hr||0);
+  const checkHRLow = Math.min(...[r.hr_r, r.hr_l, r.hr].filter(v=>v) ) || null;
+  if (checkHR>100) warnings.push('心律偏快（最高 '+checkHR+' bpm），建議減少咖啡因攝取、充足睡眠，若持續請就醫。');
+  else if (checkHRLow&&checkHRLow<60) warnings.push('心律偏慢（'+checkHRLow+' bpm），如無長期運動習慣，建議就醫評估。');
+
+  // 兩手心律差警示
+  if (hrD.v!==null&&hrD.v>10) warnings.push('兩手心律差達 '+hrD.v+' bpm（正常應 ≤5），差異偏大可能與量測姿勢或心律不整有關，建議重新量測確認，若持續請就醫。');
+  else if (hrD.v!==null&&hrD.v>5) warnings.push('兩手心律差 '+hrD.v+' bpm 略超正常（≤5），建議注意並持續觀察。');
 
   // 脈壓差警示
   const pp = ppR.v??ppL.v;
   if (pp!==null&&pp>60) warnings.push('脈壓差偏寬（'+pp+' mmHg），可能與動脈硬化有關，建議就醫評估。');
   else if (pp!==null&&pp<30) warnings.push('脈壓差偏窄（'+pp+' mmHg），可能與心輸出量不足有關，建議就醫確認。');
+
+  // 腰圍警示
+  if (waistS.c==='bad') warnings.push('腰圍 '+r.waist+' cm 已達腹部肥胖標準（'+(member.gender==='女'?'女性>80cm':'男性>90cm')+'），腹部脂肪堆積與心血管疾病、糖尿病風險密切相關，建議控制飲食與增加有氧運動。');
+  else if (waistS.c==='warn') warnings.push('腰圍 '+r.waist+' cm 接近警戒值，建議注意飲食結構，減少精緻澱粉與含糖飲料。');
+
   if (bmi>=27) warnings.push('BMI '+bmi+' 偏高，建議控制飲食熱量，增加有氧運動。');
   else if (bmi<18.5&&bmi) warnings.push('BMI '+bmi+' 偏低，建議增加營養攝取，可諮詢營養師。');
-  if (r.hr>100) warnings.push('心律 '+r.hr+' bpm 偏快，建議減少咖啡因、充足睡眠，若持續請就醫。');
   if (r.symptoms) warnings.push('目前有症狀：「'+r.symptoms+'」，建議記錄頻率，必要時就醫。');
+
   if (!r.exercise_freq||r.exercise_freq<3) advices.push('建議每週至少運動 3 次，每次 30 分鐘，可從快走、游泳等低衝擊運動開始。');
   else advices.push('運動習慣良好（每週 '+r.exercise_freq+' 次），請持續維持！');
   if (!r.sleep||r.sleep<7) advices.push('建議每晚睡眠 7–9 小時，維持固定作息，睡前避免使用手機。');
@@ -838,9 +889,12 @@ function renderAdvice() {
   if (member.gender==='女'&&age>=40) advices.push('建議定期進行乳房攝影及子宮頸抹片檢查。');
   if (member.gender==='男'&&age>=50) advices.push('建議諮詢醫師評估大腸癌及攝護腺相關篩檢。');
   if (recs.length>=2) {
-    const prev=recs[1], diff=r.weight&&prev.weight?+(r.weight-prev.weight).toFixed(1):null;
-    if (diff>2) advices.push('體重較上次增加 '+diff+' kg，建議檢視飲食習慣。');
-    else if (diff<-2) advices.push('體重較上次減少 '+Math.abs(diff)+' kg，若非刻意減重請留意。');
+    const prev=recs[1];
+    const wDiff=r.weight&&prev.weight?+(r.weight-prev.weight).toFixed(1):null;
+    if (wDiff>2) advices.push('體重較上次增加 '+wDiff+' kg，建議檢視飲食習慣。');
+    else if (wDiff<-2) advices.push('體重較上次減少 '+Math.abs(wDiff)+' kg，若非刻意減重請留意。');
+    const waistDiff=r.waist&&prev.waist?+(r.waist-prev.waist).toFixed(1):null;
+    if (waistDiff>2) advices.push('腰圍較上次增加 '+waistDiff+' cm，建議留意飲食習慣，適時增加核心肌群訓練。');
   }
   el.innerHTML = `
     ${warnings.length?`<div class="warning-box"><h3>⚠️ 需要注意</h3>${warnings.map(w=>`<div class="advice-item"><div class="advice-dot" style="background:var(--warning)"></div>${w}</div>`).join('')}</div>`
@@ -861,10 +915,9 @@ function saveRecord() {
   const g = id => document.getElementById(id).value;
   const n = id => parseFloat(g(id))||null;
   const record = { id:db.nextId++, memberId:parseInt(g('r_member')), date:g('r_date')||new Date().toISOString().slice(0,10),
-    height:n('r_height'), weight:n('r_weight'), fat:n('r_fat'),
-    sbp_r:n('r_sbp_r'), dbp_r:n('r_dbp_r'),
-    sbp_l:n('r_sbp_l'), dbp_l:n('r_dbp_l'),
-    hr:n('r_hr'),
+    height:n('r_height'), weight:n('r_weight'), fat:n('r_fat'), waist:n('r_waist'),
+    sbp_r:n('r_sbp_r'), dbp_r:n('r_dbp_r'), hr_r:n('r_hr_r'),
+    sbp_l:n('r_sbp_l'), dbp_l:n('r_dbp_l'), hr_l:n('r_hr_l'),
     meds:g('r_meds'), visit:g('r_visit'), symptoms:g('r_symptoms'),
     exercise_type:g('r_exercise_type'), exercise_freq:n('r_exercise_freq'),
     sleep:n('r_sleep'), water:n('r_water'), notes:g('r_notes') };
@@ -872,7 +925,7 @@ function saveRecord() {
   currentMemberId = record.memberId;
   saveLocal();
   document.getElementById('addRecordModal').style.display = 'none';
-  ['r_height','r_weight','r_fat','r_sbp_r','r_dbp_r','r_sbp_l','r_dbp_l','r_hr','r_meds','r_visit','r_symptoms','r_exercise_type','r_exercise_freq','r_sleep','r_water','r_notes'].forEach(id=>document.getElementById(id).value='');
+  ['r_height','r_weight','r_fat','r_waist','r_sbp_r','r_dbp_r','r_hr_r','r_sbp_l','r_dbp_l','r_hr_l','r_meds','r_visit','r_symptoms','r_exercise_type','r_exercise_freq','r_sleep','r_water','r_notes'].forEach(id=>document.getElementById(id).value='');
   renderAll();
   // Auto sync if connected
   if (getToken() && getGistId()) syncToGist();
